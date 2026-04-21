@@ -516,26 +516,30 @@ export default function TfgGolfDayFrontend() {
     }));
   };
 
-  const goToNextRegistrationStep = () => {
-    setCurrentRegistrationStep((prev) => {
-      const nextStep = prev + 1;
-      if (!form.participation.teamEntry && nextStep === 3) {
-        return 4;
-      }
+  const getNextRegistrationStep = (step) => {
+    const nextStep = step + 1;
+    if (!form.participation.teamEntry && nextStep === 3) {
+      return 4;
+    }
 
-      return Math.min(nextStep, totalRegistrationSteps);
-    });
+    return Math.min(nextStep, totalRegistrationSteps);
+  };
+
+  const getPreviousRegistrationStep = (step) => {
+    const previousStep = step - 1;
+    if (!form.participation.teamEntry && previousStep === 3) {
+      return 2;
+    }
+
+    return Math.max(previousStep, 1);
+  };
+
+  const goToNextRegistrationStep = () => {
+    setCurrentRegistrationStep((prev) => getNextRegistrationStep(prev));
   };
 
   const goToPreviousRegistrationStep = () => {
-    setCurrentRegistrationStep((prev) => {
-      const previousStep = prev - 1;
-      if (!form.participation.teamEntry && previousStep === 3) {
-        return 2;
-      }
-
-      return Math.max(previousStep, 1);
-    });
+    setCurrentRegistrationStep((prev) => getPreviousRegistrationStep(prev));
   };
 
   const resetForm = () => {
@@ -987,7 +991,7 @@ export default function TfgGolfDayFrontend() {
 
                 <WizardActions
                   canGoBack={false}
-                  canGoNext={currentRegistrationStep < totalRegistrationSteps}
+                  canGoNext={getNextRegistrationStep(currentRegistrationStep) !== currentRegistrationStep}
                   onBack={goToPreviousRegistrationStep}
                   onNext={goToNextRegistrationStep}
                 />
@@ -1059,7 +1063,7 @@ export default function TfgGolfDayFrontend() {
 
                 <WizardActions
                   canGoBack={true}
-                  canGoNext={currentRegistrationStep < totalRegistrationSteps}
+                  canGoNext={getNextRegistrationStep(currentRegistrationStep) !== currentRegistrationStep}
                   onBack={goToPreviousRegistrationStep}
                   onNext={goToNextRegistrationStep}
                 />
@@ -1219,7 +1223,7 @@ export default function TfgGolfDayFrontend() {
 
                 <WizardActions
                   canGoBack={true}
-                  canGoNext={currentRegistrationStep < totalRegistrationSteps}
+                  canGoNext={getNextRegistrationStep(currentRegistrationStep) !== currentRegistrationStep}
                   onBack={goToPreviousRegistrationStep}
                   onNext={goToNextRegistrationStep}
                 />
