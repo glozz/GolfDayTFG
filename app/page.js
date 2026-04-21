@@ -426,16 +426,16 @@ export default function TfgGolfDayFrontend() {
   ];
 
   const totalRegistrationSteps = registrationSteps.length;
-  const registeredTeams = useMemo(() => {
+  const displayedTeams = useMemo(() => {
     return form.participation.teamEntry ? form.teams : [];
   }, [form.participation.teamEntry, form.teams]);
 
   const generatedTeeTimes = useMemo(() => {
-    return registeredTeams.map((team, index) => ({
+    return displayedTeams.map((team, index) => ({
       teamName: team.teamName || `Team ${index + 1}`,
       ...teeSlots[index % teeSlots.length],
     }));
-  }, [registeredTeams]);
+  }, [displayedTeams]);
 
   const selectedPackage = packageOptions.find((p) => p.id === form.sponsorTier);
 
@@ -532,6 +532,10 @@ export default function TfgGolfDayFrontend() {
     }
 
     return Math.max(previousStep, 1);
+  };
+
+  const hasNextRegistrationStep = (step) => {
+    return getNextRegistrationStep(step) !== step;
   };
 
   const goToNextRegistrationStep = () => {
@@ -883,11 +887,11 @@ export default function TfgGolfDayFrontend() {
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span>Teams</span>
-                  <span className="font-semibold text-slate-900">{registeredTeams.length}</span>
+                  <span className="font-semibold text-slate-900">{displayedTeams.length}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span>Total players</span>
-                  <span className="font-semibold text-slate-900">{registeredTeams.length * 4}</span>
+                  <span className="font-semibold text-slate-900">{displayedTeams.length * 4}</span>
                 </div>
               </div>
             </Card>
@@ -991,7 +995,7 @@ export default function TfgGolfDayFrontend() {
 
                 <WizardActions
                   canGoBack={false}
-                  canGoNext={getNextRegistrationStep(currentRegistrationStep) !== currentRegistrationStep}
+                  canGoNext={hasNextRegistrationStep(currentRegistrationStep)}
                   onBack={goToPreviousRegistrationStep}
                   onNext={goToNextRegistrationStep}
                 />
@@ -1063,7 +1067,7 @@ export default function TfgGolfDayFrontend() {
 
                 <WizardActions
                   canGoBack={true}
-                  canGoNext={getNextRegistrationStep(currentRegistrationStep) !== currentRegistrationStep}
+                  canGoNext={hasNextRegistrationStep(currentRegistrationStep)}
                   onBack={goToPreviousRegistrationStep}
                   onNext={goToNextRegistrationStep}
                 />
@@ -1217,13 +1221,13 @@ export default function TfgGolfDayFrontend() {
                   </div>
                 ) : (
                   <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
-                    <p>Team entry is not selected. You can go back to step 1 to enable team registration.</p>
+                    <p>Team entry is not selected. You can go back to Step 1 to enable team registration.</p>
                   </div>
                 )}
 
                 <WizardActions
                   canGoBack={true}
-                  canGoNext={getNextRegistrationStep(currentRegistrationStep) !== currentRegistrationStep}
+                  canGoNext={hasNextRegistrationStep(currentRegistrationStep)}
                   onBack={goToPreviousRegistrationStep}
                   onNext={goToNextRegistrationStep}
                 />
