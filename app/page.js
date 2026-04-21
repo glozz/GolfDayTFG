@@ -426,16 +426,16 @@ export default function TfgGolfDayFrontend() {
   ];
 
   const totalRegistrationSteps = registrationSteps.length;
-  const visibleTeams = useMemo(() => {
+  const registeredTeams = useMemo(() => {
     return form.participation.teamEntry ? form.teams : [];
   }, [form.participation.teamEntry, form.teams]);
 
   const generatedTeeTimes = useMemo(() => {
-    return visibleTeams.map((team, index) => ({
+    return registeredTeams.map((team, index) => ({
       teamName: team.teamName || `Team ${index + 1}`,
       ...teeSlots[index % teeSlots.length],
     }));
-  }, [visibleTeams]);
+  }, [registeredTeams]);
 
   const selectedPackage = packageOptions.find((p) => p.id === form.sponsorTier);
 
@@ -879,11 +879,11 @@ export default function TfgGolfDayFrontend() {
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span>Teams</span>
-                  <span className="font-semibold text-slate-900">{visibleTeams.length}</span>
+                  <span className="font-semibold text-slate-900">{registeredTeams.length}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span>Total players</span>
-                  <span className="font-semibold text-slate-900">{visibleTeams.length * 4}</span>
+                  <span className="font-semibold text-slate-900">{registeredTeams.length * 4}</span>
                 </div>
               </div>
             </Card>
@@ -1213,7 +1213,7 @@ export default function TfgGolfDayFrontend() {
                   </div>
                 ) : (
                   <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
-                    Team entry is not selected. You can go back to step 1 to enable team registration.
+                    <p>Team entry is not selected. You can go back to step 1 to enable team registration.</p>
                   </div>
                 )}
 
