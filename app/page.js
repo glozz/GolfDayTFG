@@ -84,6 +84,13 @@ const navItems = [
   { id: "dashboard", label: "Admin" },
 ];
 
+const registrationSteps = [
+  "Participation options",
+  "Company details",
+  "Team registration",
+  "Event & catering notes",
+];
+
 const createPlayer = (halfwayOptions = [], dinnerOptions = []) => ({
   id: crypto.randomUUID(),
   firstName: "",
@@ -203,6 +210,59 @@ function Select({ label, children, className = "", ...props }) {
   );
 }
 
+function WizardActions({
+  canGoBack,
+  canGoNext,
+  onBack,
+  onNext,
+  isLastStep = false,
+  submitting = false,
+  submitDisabled = false,
+  onReset,
+}) {
+  return (
+    <div className="mt-6 flex flex-wrap items-center gap-4">
+      <button
+        type="button"
+        onClick={onBack}
+        disabled={!canGoBack}
+        className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        Back
+      </button>
+
+      {isLastStep ? (
+        <button
+          type="submit"
+          disabled={submitting || submitDisabled}
+          className="inline-flex items-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Submitting..." : "Submit Registration"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!canGoNext}
+          className="inline-flex items-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Next
+        </button>
+      )}
+
+      {isLastStep && onReset && (
+        <button
+          type="button"
+          onClick={onReset}
+          className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800"
+        >
+          Reset Form
+        </button>
+      )}
+    </div>
+  );
+}
+
 function PlayerModal({ registration, onClose }) {
   if (!registration) return null;
 
@@ -293,6 +353,7 @@ export default function TfgGolfDayFrontend() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [event, setEvent] = useState(null);
   const [form, setForm] = useState(createInitialForm());
+  const [currentRegistrationStep, setCurrentRegistrationStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [activeTab, setActiveTab] = useState("registrations");
   const [loadingEvent, setLoadingEvent] = useState(true);
@@ -364,12 +425,17 @@ export default function TfgGolfDayFrontend() {
     { label: "Pending", value: pendingCount, icon: Clock3 },
   ];
 
+  const totalRegistrationSteps = registrationSteps.length;
+  const displayedTeams = useMemo(() => {
+    return form.participation.teamEntry ? form.teams : [];
+  }, [form.participation.teamEntry, form.teams]);
+
   const generatedTeeTimes = useMemo(() => {
-    return form.teams.map((team, index) => ({
+    return displayedTeams.map((team, index) => ({
       teamName: team.teamName || `Team ${index + 1}`,
       ...teeSlots[index % teeSlots.length],
     }));
-  }, [form.teams]);
+  }, [displayedTeams]);
 
   const selectedPackage = packageOptions.find((p) => p.id === form.sponsorTier);
 
@@ -450,8 +516,39 @@ export default function TfgGolfDayFrontend() {
     }));
   };
 
+  const getNextRegistrationStep = (step) => {
+    const nextStep = step + 1;
+    if (!form.participation.teamEntry && nextStep === 3) {
+      return 4;
+    }
+
+    return Math.min(nextStep, totalRegistrationSteps);
+  };
+
+  const getPreviousRegistrationStep = (step) => {
+    const previousStep = step - 1;
+    if (!form.participation.teamEntry && previousStep === 3) {
+      return 2;
+    }
+
+    return Math.max(previousStep, 1);
+  };
+
+  const hasNextRegistrationStep = (step) => {
+    return getNextRegistrationStep(step) !== step;
+  };
+
+  const goToNextRegistrationStep = () => {
+    setCurrentRegistrationStep((prev) => getNextRegistrationStep(prev));
+  };
+
+  const goToPreviousRegistrationStep = () => {
+    setCurrentRegistrationStep((prev) => getPreviousRegistrationStep(prev));
+  };
+
   const resetForm = () => {
     setForm(createInitialForm(event));
+    setCurrentRegistrationStep(1);
     setSubmitted(false);
     setSuccessMessage("");
     setError("");
@@ -758,21 +855,21 @@ export default function TfgGolfDayFrontend() {
             <SectionTitle
               eyebrow="Registration"
               title="Complete event registration"
-              subtitle="Capture interest, company details, team entries, prize donations, and catering preferences in a structured multi-section form."
+              subtitle="Capture interest, company details, team entries, prize donations, and catering preferences in a four-step registration wizard."
             />
 
             <Card className="p-6">
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Registration steps</p>
               <div className="mt-5 space-y-4">
-                {[
-                  "Choose participation options",
-                  "Enter company and invoicing details",
-                  "Add teams and player details",
-                  "Capture dinner and dietary needs",
-                  "Preview tee times and submit",
-                ].map((step, index) => (
+                {registrationSteps.map((step, index) => (
                   <div key={step} className="flex items-start gap-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                        currentRegistrationStep === index + 1
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-200 text-slate-700"
+                      }`}
+                    >
                       {index + 1}
                     </div>
                     <p className="pt-1 text-sm text-slate-600">{step}</p>
@@ -790,11 +887,11 @@ export default function TfgGolfDayFrontend() {
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span>Teams</span>
-                  <span className="font-semibold text-slate-900">{form.teams.length}</span>
+                  <span className="font-semibold text-slate-900">{displayedTeams.length}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span>Total players</span>
-                  <span className="font-semibold text-slate-900">{form.teams.length * 4}</span>
+                  <span className="font-semibold text-slate-900">{displayedTeams.length * 4}</span>
                 </div>
               </div>
             </Card>
@@ -807,362 +904,413 @@ export default function TfgGolfDayFrontend() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Card className="p-6">
-              <div className="mb-5 flex items-center gap-3">
-                <BadgeInfo className="h-5 w-5" />
-                <h3 className="text-lg font-bold">Participation options</h3>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {[
-                  { key: "teamEntry", label: "Enter a Team", icon: Users },
-                  { key: "sponsorHole", label: "Sponsor a Hole", icon: Trophy },
-                  { key: "donatePrizes", label: "Donate Prizes", icon: Gift },
-                  { key: "charityDonation", label: "Charity Donation", icon: HeartHandshake },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const checked = form.participation[item.key];
-                  return (
-                    <button
-                      type="button"
-                      key={item.key}
-                      onClick={() => updateParticipation(item.key)}
-                      className={`rounded-3xl border p-5 text-left transition ${
-                        checked
-                          ? "border-slate-900 bg-slate-900 text-white"
-                          : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
-                      }`}
-                    >
-                      <Icon className="mb-4 h-5 w-5" />
-                      <p className="font-semibold">{item.label}</p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6">
-                <Select
-                  label="Selected sponsorship / entry package"
-                  value={form.sponsorTier}
-                  onChange={(e) => setForm((prev) => ({ ...prev, sponsorTier: e.target.value }))}
-                >
-                  {packageOptions.map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>
-                      {pkg.title}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="mb-5 flex items-center gap-3">
-                <Building2 className="h-5 w-5" />
-                <h3 className="text-lg font-bold">Company details</h3>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input
-                  label="Company name"
-                  required
-                  value={form.company.companyName}
-                  onChange={(e) => updateCompany("companyName", e.target.value)}
-                  placeholder="Enter company name"
-                />
-                <Input
-                  label="Contact person"
-                  required
-                  value={form.company.contactPerson}
-                  onChange={(e) => updateCompany("contactPerson", e.target.value)}
-                  placeholder="Full name"
-                />
-                <Input
-                  label="Email"
-                  required
-                  type="email"
-                  value={form.company.email}
-                  onChange={(e) => updateCompany("email", e.target.value)}
-                  placeholder="name@company.com"
-                />
-                <Input
-                  label="Phone"
-                  required
-                  value={form.company.phone}
-                  onChange={(e) => updateCompany("phone", e.target.value)}
-                  placeholder="012 345 6789"
-                />
-                <Input
-                  label="VAT number"
-                  value={form.company.vatNumber}
-                  onChange={(e) => updateCompany("vatNumber", e.target.value)}
-                  placeholder="VAT registration"
-                />
-                <Input
-                  label="Internal reference"
-                  value={form.company.internalReference}
-                  onChange={(e) => updateCompany("internalReference", e.target.value)}
-                  placeholder="Optional PO or billing reference"
-                />
-              </div>
-              <div className="mt-4">
-                <TextArea
-                  label="Notes for the event team"
-                  value={form.company.notes}
-                  onChange={(e) => updateCompany("notes", e.target.value)}
-                  placeholder="Anything the organizers should know"
-                />
-              </div>
-            </Card>
-
-            {(form.participation.donatePrizes || form.participation.charityDonation) && (
+            {currentRegistrationStep === 1 && (
               <Card className="p-6">
                 <div className="mb-5 flex items-center gap-3">
-                  <Gift className="h-5 w-5" />
-                  <h3 className="text-lg font-bold">Donation details</h3>
+                  <BadgeInfo className="h-5 w-5" />
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Step 1 of {totalRegistrationSteps}
+                    </p>
+                    <h3 className="text-lg font-bold">Participation options</h3>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {[
+                    { key: "teamEntry", label: "Enter a Team", icon: Users },
+                    { key: "sponsorHole", label: "Sponsor a Hole", icon: Trophy },
+                    { key: "donatePrizes", label: "Donate Prizes", icon: Gift },
+                    { key: "charityDonation", label: "Charity Donation", icon: HeartHandshake },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const checked = form.participation[item.key];
+                    return (
+                      <button
+                        type="button"
+                        key={item.key}
+                        onClick={() => updateParticipation(item.key)}
+                        className={`rounded-3xl border p-5 text-left transition ${
+                          checked
+                            ? "border-slate-900 bg-slate-900 text-white"
+                            : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Icon className="mb-4 h-5 w-5" />
+                        <p className="font-semibold">{item.label}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6">
+                  <Select
+                    label="Selected sponsorship / entry package"
+                    value={form.sponsorTier}
+                    onChange={(e) => setForm((prev) => ({ ...prev, sponsorTier: e.target.value }))}
+                  >
+                    {packageOptions.map((pkg) => (
+                      <option key={pkg.id} value={pkg.id}>
+                        {pkg.title}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                {(form.participation.donatePrizes || form.participation.charityDonation) && (
+                  <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-5 flex items-center gap-3">
+                      <Gift className="h-5 w-5" />
+                      <h4 className="text-base font-bold">Donation details</h4>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {form.participation.donatePrizes && (
+                        <>
+                          <Input
+                            label="Prize description"
+                            value={form.donation.prizeDescription}
+                            onChange={(e) => updateDonation("prizeDescription", e.target.value)}
+                            placeholder="e.g. 4 x branded golf bags"
+                          />
+                          <Input
+                            label="Prize quantity"
+                            type="number"
+                            min="1"
+                            value={form.donation.prizeQuantity}
+                            onChange={(e) => updateDonation("prizeQuantity", e.target.value)}
+                          />
+                        </>
+                      )}
+                      {form.participation.charityDonation && (
+                        <Input
+                          label="Charity amount"
+                          value={form.donation.charityAmount}
+                          onChange={(e) => updateDonation("charityAmount", e.target.value)}
+                          placeholder="R"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <WizardActions
+                  canGoBack={false}
+                  canGoNext={hasNextRegistrationStep(currentRegistrationStep)}
+                  onBack={goToPreviousRegistrationStep}
+                  onNext={goToNextRegistrationStep}
+                />
+              </Card>
+            )}
+
+            {currentRegistrationStep === 2 && (
+              <Card className="p-6">
+                <div className="mb-5 flex items-center gap-3">
+                  <Building2 className="h-5 w-5" />
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Step 2 of {totalRegistrationSteps}
+                    </p>
+                    <h3 className="text-lg font-bold">Company details</h3>
+                  </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {form.participation.donatePrizes && (
-                    <>
-                      <Input
-                        label="Prize description"
-                        value={form.donation.prizeDescription}
-                        onChange={(e) => updateDonation("prizeDescription", e.target.value)}
-                        placeholder="e.g. 4 x branded golf bags"
-                      />
-                      <Input
-                        label="Prize quantity"
-                        type="number"
-                        min="1"
-                        value={form.donation.prizeQuantity}
-                        onChange={(e) => updateDonation("prizeQuantity", e.target.value)}
-                      />
-                    </>
-                  )}
-                  {form.participation.charityDonation && (
-                    <Input
-                      label="Charity amount"
-                      value={form.donation.charityAmount}
-                      onChange={(e) => updateDonation("charityAmount", e.target.value)}
-                      placeholder="R"
-                    />
+                  <Input
+                    label="Company name"
+                    required
+                    value={form.company.companyName}
+                    onChange={(e) => updateCompany("companyName", e.target.value)}
+                    placeholder="Enter company name"
+                  />
+                  <Input
+                    label="Contact person"
+                    required
+                    value={form.company.contactPerson}
+                    onChange={(e) => updateCompany("contactPerson", e.target.value)}
+                    placeholder="Full name"
+                  />
+                  <Input
+                    label="Email"
+                    required
+                    type="email"
+                    value={form.company.email}
+                    onChange={(e) => updateCompany("email", e.target.value)}
+                    placeholder="name@company.com"
+                  />
+                  <Input
+                    label="Phone"
+                    required
+                    value={form.company.phone}
+                    onChange={(e) => updateCompany("phone", e.target.value)}
+                    placeholder="012 345 6789"
+                  />
+                  <Input
+                    label="VAT number"
+                    value={form.company.vatNumber}
+                    onChange={(e) => updateCompany("vatNumber", e.target.value)}
+                    placeholder="VAT registration"
+                  />
+                  <Input
+                    label="Internal reference"
+                    value={form.company.internalReference}
+                    onChange={(e) => updateCompany("internalReference", e.target.value)}
+                    placeholder="Optional PO or billing reference"
+                  />
+                </div>
+                <div className="mt-4">
+                  <TextArea
+                    label="Notes for the event team"
+                    value={form.company.notes}
+                    onChange={(e) => updateCompany("notes", e.target.value)}
+                    placeholder="Anything the organizers should know"
+                  />
+                </div>
+
+                <WizardActions
+                  canGoBack={true}
+                  canGoNext={hasNextRegistrationStep(currentRegistrationStep)}
+                  onBack={goToPreviousRegistrationStep}
+                  onNext={goToNextRegistrationStep}
+                />
+              </Card>
+            )}
+
+            {currentRegistrationStep === 3 && (
+              <Card className="p-6">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5" />
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        Step 3 of {totalRegistrationSteps}
+                      </p>
+                      <h3 className="text-lg font-bold">Team registration</h3>
+                    </div>
+                  </div>
+                  {form.participation.teamEntry && (
+                    <button
+                      type="button"
+                      onClick={addTeam}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add team
+                    </button>
                   )}
                 </div>
+
+                {form.participation.teamEntry ? (
+                  <div className="space-y-6">
+                    {form.teams.map((team, teamIndex) => (
+                      <div key={team.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <h4 className="text-base font-bold text-slate-900">
+                            {team.teamName || `Team ${teamIndex + 1}`}
+                          </h4>
+                          {form.teams.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeTeam(team.id)}
+                              className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Remove
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <Input
+                            label="Team name"
+                            value={team.teamName}
+                            onChange={(e) => updateTeam(team.id, "teamName", e.target.value)}
+                            placeholder="Enter team name"
+                          />
+                          <Input
+                            label="Carts required"
+                            type="number"
+                            min="0"
+                            value={team.carts}
+                            onChange={(e) => updateTeam(team.id, "carts", e.target.value)}
+                          />
+                          <Input
+                            label="Trolleys required"
+                            type="number"
+                            min="0"
+                            value={team.trolleys}
+                            onChange={(e) => updateTeam(team.id, "trolleys", e.target.value)}
+                          />
+                        </div>
+
+                        <div className="mt-5 space-y-4">
+                          {team.players.map((player, playerIndex) => (
+                            <div key={player.id} className="rounded-3xl border border-white bg-white p-4 shadow-sm">
+                              <p className="mb-4 text-sm font-semibold text-slate-900">Player {playerIndex + 1}</p>
+                              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                <Input
+                                  label="First name"
+                                  required
+                                  value={player.firstName}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "firstName", e.target.value)}
+                                  placeholder="First name"
+                                />
+                                <Input
+                                  label="Last name"
+                                  required
+                                  value={player.lastName}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "lastName", e.target.value)}
+                                  placeholder="Last name"
+                                />
+                                <Input
+                                  label="Email"
+                                  required
+                                  type="email"
+                                  value={player.email}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "email", e.target.value)}
+                                  placeholder="player@email.com"
+                                />
+                                <Input
+                                  label="Phone"
+                                  required
+                                  value={player.phone}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "phone", e.target.value)}
+                                  placeholder="012 345 6789"
+                                />
+                                <Input
+                                  label="Handicap"
+                                  type="number"
+                                  min="0"
+                                  max="54"
+                                  value={player.handicap}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "handicap", e.target.value)}
+                                  placeholder="Optional"
+                                />
+                                <Select
+                                  label="Halfway house meal"
+                                  value={player.meal}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "meal", e.target.value)}
+                                >
+                                  {halfwayHouseOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </Select>
+                                <Select
+                                  label="Dinner meal"
+                                  value={player.dinnerMeal}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "dinnerMeal", e.target.value)}
+                                >
+                                  {dinnerOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </Select>
+                                <Input
+                                  label="Dietary requirements"
+                                  value={player.dietary}
+                                  onChange={(e) => updatePlayer(team.id, player.id, "dietary", e.target.value)}
+                                  placeholder="Optional"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                    <p>Team entry is not selected. You can go back to Step 1 to enable team registration.</p>
+                  </div>
+                )}
+
+                <WizardActions
+                  canGoBack={true}
+                  canGoNext={hasNextRegistrationStep(currentRegistrationStep)}
+                  onBack={goToPreviousRegistrationStep}
+                  onNext={goToNextRegistrationStep}
+                />
+              </Card>
+            )}
+
+            {currentRegistrationStep === 4 && (
+              <Card className="p-6">
+                <div className="mb-5 flex items-center gap-3">
+                  <UtensilsCrossed className="h-5 w-5" />
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Step 4 of {totalRegistrationSteps}
+                    </p>
+                    <h3 className="text-lg font-bold">Event & catering notes</h3>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Select
+                    label="Halfway house preference"
+                    value={form.catering.halfwayHousePreference}
+                    onChange={(e) => updateCatering("halfwayHousePreference", e.target.value)}
+                  >
+                    {halfwayHouseOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select
+                    label="Evening dinner attendance"
+                    value={form.catering.eveningDinnerAttendance}
+                    onChange={(e) => updateCatering("eveningDinnerAttendance", e.target.value)}
+                  >
+                    <option>Yes</option>
+                    <option>No</option>
+                  </Select>
+                </div>
+                <div className="mt-4">
+                  <TextArea
+                    label="General dietary notes"
+                    value={form.catering.generalDietaryNotes}
+                    onChange={(e) => updateCatering("generalDietaryNotes", e.target.value)}
+                    placeholder="Capture any team-level catering notes here"
+                  />
+                </div>
+
+                <WizardActions
+                  canGoBack={true}
+                  onBack={goToPreviousRegistrationStep}
+                  isLastStep={true}
+                  submitting={submitting}
+                  submitDisabled={event?.registration && !event.registration.isOpen}
+                  onReset={resetForm}
+                />
               </Card>
             )}
 
             {form.participation.teamEntry && (
               <Card className="p-6">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5" />
-                    <h3 className="text-lg font-bold">Team registration</h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addTeam}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add team
-                  </button>
+                <div className="mb-5 flex items-center gap-3">
+                  <Clock3 className="h-5 w-5" />
+                  <h3 className="text-lg font-bold">Tee time preview</h3>
                 </div>
-
-                <div className="space-y-6">
-                  {form.teams.map((team, teamIndex) => (
-                    <div key={team.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <h4 className="text-base font-bold text-slate-900">
-                          {team.teamName || `Team ${teamIndex + 1}`}
-                        </h4>
-                        {form.teams.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeTeam(team.id)}
-                            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Remove
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <Input
-                          label="Team name"
-                          value={team.teamName}
-                          onChange={(e) => updateTeam(team.id, "teamName", e.target.value)}
-                          placeholder="Enter team name"
-                        />
-                        <Input
-                          label="Carts required"
-                          type="number"
-                          min="0"
-                          value={team.carts}
-                          onChange={(e) => updateTeam(team.id, "carts", e.target.value)}
-                        />
-                        <Input
-                          label="Trolleys required"
-                          type="number"
-                          min="0"
-                          value={team.trolleys}
-                          onChange={(e) => updateTeam(team.id, "trolleys", e.target.value)}
-                        />
-                      </div>
-
-                      <div className="mt-5 space-y-4">
-                      {team.players.map((player, playerIndex) => (
-  <div key={player.id} className="rounded-3xl border border-white bg-white p-4 shadow-sm">
-    <p className="mb-4 text-sm font-semibold text-slate-900">
-      Player {playerIndex + 1}
-    </p>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <Input
-        label="First name"
-        required
-        value={player.firstName}
-        onChange={(e) => updatePlayer(team.id, player.id, "firstName", e.target.value)}
-        placeholder="First name"
-      />
-      <Input
-        label="Last name"
-        required
-        value={player.lastName}
-        onChange={(e) => updatePlayer(team.id, player.id, "lastName", e.target.value)}
-        placeholder="Last name"
-      />
-      <Input
-        label="Email"
-        required
-        type="email"
-        value={player.email}
-        onChange={(e) => updatePlayer(team.id, player.id, "email", e.target.value)}
-        placeholder="player@email.com"
-      />
-      <Input
-        label="Phone"
-        required
-        value={player.phone}
-        onChange={(e) => updatePlayer(team.id, player.id, "phone", e.target.value)}
-        placeholder="012 345 6789"
-      />
-      <Input
-        label="Handicap"
-        type="number"
-        min="0"
-        max="54"
-        value={player.handicap}
-        onChange={(e) => updatePlayer(team.id, player.id, "handicap", e.target.value)}
-        placeholder="Optional"
-      />
-      <Select
-        label="Halfway house meal"
-        value={player.meal}
-        onChange={(e) => updatePlayer(team.id, player.id, "meal", e.target.value)}
-      >
-        {halfwayHouseOptions.map((option) => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </Select>
-      <Select
-        label="Dinner meal"
-        value={player.dinnerMeal}
-        onChange={(e) => updatePlayer(team.id, player.id, "dinnerMeal", e.target.value)}
-      >
-        {dinnerOptions.map((option) => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </Select>
-      <Input
-        label="Dietary requirements"
-        value={player.dietary}
-        onChange={(e) => updatePlayer(team.id, player.id, "dietary", e.target.value)}
-        placeholder="Optional"
-      />
-    </div>
-  </div>
-))}
-                      </div>
+                <div className="overflow-hidden rounded-3xl border border-slate-200">
+                  <div className="grid grid-cols-3 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+                    <span>Team</span>
+                    <span>Time</span>
+                    <span>Starting hole</span>
+                  </div>
+                  {generatedTeeTimes.map((slot) => (
+                    <div
+                      key={`${slot.teamName}-${slot.time}`}
+                      className="grid grid-cols-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-700"
+                    >
+                      <span>{slot.teamName}</span>
+                      <span>{slot.time}</span>
+                      <span>{slot.hole}</span>
                     </div>
                   ))}
                 </div>
               </Card>
             )}
-
-            <Card className="p-6">
-              <div className="mb-5 flex items-center gap-3">
-                <UtensilsCrossed className="h-5 w-5" />
-                <h3 className="text-lg font-bold">Event & catering notes</h3>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <Select
-                  label="Halfway house preference"
-                  value={form.catering.halfwayHousePreference}
-                  onChange={(e) => updateCatering("halfwayHousePreference", e.target.value)}
-                >
-                  {halfwayHouseOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  label="Evening dinner attendance"
-                  value={form.catering.eveningDinnerAttendance}
-                  onChange={(e) => updateCatering("eveningDinnerAttendance", e.target.value)}
-                >
-                  <option>Yes</option>
-                  <option>No</option>
-                </Select>
-              </div>
-              <div className="mt-4">
-                <TextArea
-                  label="General dietary notes"
-                  value={form.catering.generalDietaryNotes}
-                  onChange={(e) => updateCatering("generalDietaryNotes", e.target.value)}
-                  placeholder="Capture any team-level catering notes here"
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="mb-5 flex items-center gap-3">
-                <Clock3 className="h-5 w-5" />
-                <h3 className="text-lg font-bold">Tee time preview</h3>
-              </div>
-              <div className="overflow-hidden rounded-3xl border border-slate-200">
-                <div className="grid grid-cols-3 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
-                  <span>Team</span>
-                  <span>Time</span>
-                  <span>Starting hole</span>
-                </div>
-                {generatedTeeTimes.map((slot) => (
-                  <div
-                    key={`${slot.teamName}-${slot.time}`}
-                    className="grid grid-cols-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-700"
-                  >
-                    <span>{slot.teamName}</span>
-                    <span>{slot.time}</span>
-                    <span>{slot.hole}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                type="submit"
-                disabled={submitting || (event?.registration && !event.registration.isOpen)}
-                className="inline-flex items-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {submitting ? "Submitting..." : "Submit Registration"}
-              </button>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800"
-              >
-                Reset Form
-              </button>
-            </div>
           </form>
         </div>
       </section>
