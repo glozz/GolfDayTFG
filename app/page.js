@@ -106,12 +106,7 @@ const createPlayer = (halfwayOptions = [], dinnerOptions = []) => ({
 const createTeam = (index, halfwayOptions = [], dinnerOptions = []) => ({
   id: crypto.randomUUID(),
   teamName: `Team ${index + 1}`,
-  players: [
-    createPlayer(halfwayOptions, dinnerOptions),
-    createPlayer(halfwayOptions, dinnerOptions),
-    createPlayer(halfwayOptions, dinnerOptions),
-    createPlayer(halfwayOptions, dinnerOptions),
-  ],
+  players: [createPlayer(halfwayOptions, dinnerOptions)],
   carts: 0,
   trolleys: 0,
   dinner: true,
@@ -479,10 +474,17 @@ export default function TfgGolfDayFrontend() {
     }));
   };
 
-  const addTeam = () => {
+  const addPlayer = (teamId) => {
     setForm((prev) => ({
       ...prev,
-      teams: [...prev.teams, createTeam(prev.teams.length, halfwayHouseOptions, dinnerOptions)],
+      teams: prev.teams.map((team) =>
+        team.id === teamId
+          ? {
+              ...team,
+              players: [...team.players, createPlayer(halfwayHouseOptions, dinnerOptions)],
+            }
+          : team
+      ),
     }));
   };
 
@@ -1086,16 +1088,6 @@ export default function TfgGolfDayFrontend() {
                       <h3 className="text-lg font-bold">Team registration</h3>
                     </div>
                   </div>
-                  {form.participation.teamEntry && (
-                    <button
-                      type="button"
-                      onClick={addTeam}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add team
-                    </button>
-                  )}
                 </div>
 
                 {form.participation.teamEntry ? (
@@ -1215,6 +1207,16 @@ export default function TfgGolfDayFrontend() {
                               </div>
                             </div>
                           ))}
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => addPlayer(team.id)}
+                              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100"
+                              aria-label="Add player"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
