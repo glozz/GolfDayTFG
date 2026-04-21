@@ -1134,16 +1134,6 @@ export default function TfgGolfDayFrontend() {
                         </div>
 
                         <div className="mt-5 space-y-4">
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => addPlayer(team.id)}
-                              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100"
-                              aria-label="Add player"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
                           {team.players.map((player, playerIndex) => (
                             <div key={player.id} className="rounded-3xl border border-white bg-white p-4 shadow-sm">
                               <p className="mb-4 text-sm font-semibold text-slate-900">Player {playerIndex + 1}</p>
@@ -1217,6 +1207,16 @@ export default function TfgGolfDayFrontend() {
                               </div>
                             </div>
                           ))}
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => addPlayer(team.id)}
+                              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100"
+                              aria-label="Add player"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
