@@ -426,18 +426,16 @@ export default function TfgGolfDayFrontend() {
   ];
 
   const totalRegistrationSteps = registrationSteps.length;
-  const visibleTeams = form.participation.teamEntry ? form.teams : [];
+  const visibleTeams = useMemo(() => {
+    return form.participation.teamEntry ? form.teams : [];
+  }, [form.participation.teamEntry, form.teams]);
 
   const generatedTeeTimes = useMemo(() => {
-    if (!form.participation.teamEntry) {
-      return [];
-    }
-
-    return form.teams.map((team, index) => ({
+    return visibleTeams.map((team, index) => ({
       teamName: team.teamName || `Team ${index + 1}`,
       ...teeSlots[index % teeSlots.length],
     }));
-  }, [form.participation.teamEntry, form.teams]);
+  }, [visibleTeams]);
 
   const selectedPackage = packageOptions.find((p) => p.id === form.sponsorTier);
 
@@ -519,11 +517,25 @@ export default function TfgGolfDayFrontend() {
   };
 
   const goToNextRegistrationStep = () => {
-    setCurrentRegistrationStep((prev) => Math.min(prev + 1, totalRegistrationSteps));
+    setCurrentRegistrationStep((prev) => {
+      const nextStep = prev + 1;
+      if (!form.participation.teamEntry && nextStep === 3) {
+        return 4;
+      }
+
+      return Math.min(nextStep, totalRegistrationSteps);
+    });
   };
 
   const goToPreviousRegistrationStep = () => {
-    setCurrentRegistrationStep((prev) => Math.max(prev - 1, 1));
+    setCurrentRegistrationStep((prev) => {
+      const previousStep = prev - 1;
+      if (!form.participation.teamEntry && previousStep === 3) {
+        return 2;
+      }
+
+      return Math.max(previousStep, 1);
+    });
   };
 
   const resetForm = () => {
@@ -1266,19 +1278,19 @@ export default function TfgGolfDayFrontend() {
               </Card>
             )}
 
-            <Card className="p-6">
-              <div className="mb-5 flex items-center gap-3">
-                <Clock3 className="h-5 w-5" />
-                <h3 className="text-lg font-bold">Tee time preview</h3>
-              </div>
-              <div className="overflow-hidden rounded-3xl border border-slate-200">
-                <div className="grid grid-cols-3 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
-                  <span>Team</span>
-                  <span>Time</span>
-                  <span>Starting hole</span>
+            {form.participation.teamEntry && (
+              <Card className="p-6">
+                <div className="mb-5 flex items-center gap-3">
+                  <Clock3 className="h-5 w-5" />
+                  <h3 className="text-lg font-bold">Tee time preview</h3>
                 </div>
-                {generatedTeeTimes.length ? (
-                  generatedTeeTimes.map((slot) => (
+                <div className="overflow-hidden rounded-3xl border border-slate-200">
+                  <div className="grid grid-cols-3 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+                    <span>Team</span>
+                    <span>Time</span>
+                    <span>Starting hole</span>
+                  </div>
+                  {generatedTeeTimes.map((slot) => (
                     <div
                       key={`${slot.teamName}-${slot.time}`}
                       className="grid grid-cols-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-700"
@@ -1287,14 +1299,10 @@ export default function TfgGolfDayFrontend() {
                       <span>{slot.time}</span>
                       <span>{slot.hole}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="border-t border-slate-200 px-4 py-6 text-sm text-slate-500">
-                    Tee times will appear here once a team entry is selected.
-                  </div>
-                )}
-              </div>
-            </Card>
+                  ))}
+                </div>
+              </Card>
+            )}
           </form>
         </div>
       </section>
