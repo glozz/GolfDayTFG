@@ -1,5 +1,5 @@
 
-const API_BASE_URL = "http://forekonline-001-site6.rtempurl.com".replace(/\/$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 
 const API_VERSION = "v1";
 
