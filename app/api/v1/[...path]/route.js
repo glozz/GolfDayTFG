@@ -6,7 +6,7 @@ async function proxyRequest(request, { params }) {
   if (!UPSTREAM_API_BASE_URL) {
     return Response.json(
       {
-        message: "Golf Day API is not configured.",
+        message: "GOLFDAY_API_BASE_URL environment variable is not configured. Please set it to your Golf Day API backend URL.",
       },
       { status: 500 }
     );

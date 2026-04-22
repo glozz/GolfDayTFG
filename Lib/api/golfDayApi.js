@@ -1,8 +1,6 @@
 
 const API_BASE_PATH = (
-  process.env.NEXT_PUBLIC_API_PATH ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "/api"
+  process.env.NEXT_PUBLIC_API_PATH || "/api"
 ).replace(/\/$/, "");
 
 const API_VERSION = "v1";
