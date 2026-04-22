@@ -56,8 +56,11 @@ async function proxyRequest(request, { params }) {
       statusText: upstreamResponse.statusText,
       headers: responseHeaders,
     });
-  } catch {
-    console.error("Golf Day API proxy request failed.");
+  } catch (error) {
+    console.error("Golf Day API proxy request failed.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
     return Response.json(
       {
         message: "Unable to reach the Golf Day API.",
