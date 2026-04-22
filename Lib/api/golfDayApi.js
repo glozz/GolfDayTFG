@@ -1,12 +1,12 @@
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "/api").replace(/\/$/, "");
 
 const API_VERSION = "v1";
 
 // ─── Core request with ApiResponse<T> unwrapping ───
 
 async function apiRequest(path, options = {}) {
-  const url = `${API_BASE_URL}/api/${API_VERSION}${path}`;
+  const url = `${API_BASE_URL}/${API_VERSION}${path}`;
 
   const response = await fetch(url, {
     headers: {

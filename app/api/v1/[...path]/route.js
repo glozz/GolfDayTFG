@@ -20,7 +20,11 @@ async function proxyRequest(request, { params }) {
   };
 
   if (!["GET", "HEAD"].includes(request.method)) {
-    requestInit.body = await request.text();
+    const body = await request.arrayBuffer();
+
+    if (body.byteLength > 0) {
+      requestInit.body = body;
+    }
   }
 
   try {
@@ -34,7 +38,9 @@ async function proxyRequest(request, { params }) {
       statusText: response.statusText,
       headers: responseHeaders,
     });
-  } catch {
+  } catch (error) {
+    console.error("Failed to proxy Golf Day API request:", error);
+
     return Response.json(
       {
         message: "Failed to reach the Golf Day API.",
