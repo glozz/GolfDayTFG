@@ -2,7 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, set the backend URL:
+
+```bash
+cp .env.example .env.local
+```
+
+Then run the development server:
 
 ```bash
 npm run dev
@@ -12,12 +18,6 @@ yarn dev
 pnpm dev
 # or
 bun dev
-```
-
-Set the backend URL before starting the app:
-
-```bash
-cp .env.example .env.local
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

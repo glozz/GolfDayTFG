@@ -74,3 +74,15 @@ export async function GET(request, context) {
 export async function POST(request, context) {
   return proxyRequest(request, context);
 }
+
+export async function PUT(request, context) {
+  return proxyRequest(request, context);
+}
+
+export async function PATCH(request, context) {
+  return proxyRequest(request, context);
+}
+
+export async function DELETE(request, context) {
+  return proxyRequest(request, context);
+}
