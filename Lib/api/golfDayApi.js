@@ -1,12 +1,10 @@
 
-const API_BASE_URL = "http://forekonline-001-site6.rtempurl.com".replace(/\/$/, "");
-
-const API_VERSION = "v1";
+const API_BASE_URL = "/api/golf-day";
 
 // ─── Core request with ApiResponse<T> unwrapping ───
 
 async function apiRequest(path, options = {}) {
-  const url = `${API_BASE_URL}/api/${API_VERSION}${path}`;
+  const url = `${API_BASE_URL}${path}`;
 
   const response = await fetch(url, {
     headers: {
