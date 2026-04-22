@@ -1,3 +1,4 @@
+// Default to HTTPS for secure deployments. Override GOLF_DAY_API_BASE_URL if the upstream only exposes HTTP.
 const UPSTREAM_API_BASE_URL = (
   process.env.GOLF_DAY_API_BASE_URL || "https://forekonline-001-site6.rtempurl.com/api/v1"
 ).replace(/\/$/, "");
@@ -34,7 +35,6 @@ async function proxyRequest(request, { params }) {
   const init = {
     method: request.method,
     headers,
-    cache: "no-store",
   };
 
   if (!["GET", "HEAD"].includes(request.method) && request.body) {
@@ -56,11 +56,8 @@ async function proxyRequest(request, { params }) {
       statusText: upstreamResponse.statusText,
       headers: responseHeaders,
     });
-  } catch (error) {
-    console.error(
-      "Golf Day API proxy request failed:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
+  } catch {
+    console.error("Golf Day API proxy request failed.");
     return Response.json(
       {
         message: "Unable to reach the Golf Day API.",
