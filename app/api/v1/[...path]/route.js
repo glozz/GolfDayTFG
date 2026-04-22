@@ -47,7 +47,8 @@ async function proxyRequest(request, { params }) {
       headers: responseHeaders,
     });
   } catch (error) {
-    const requestId = crypto.randomUUID();
+    const requestId =
+      globalThis.crypto?.randomUUID?.() || `proxy-${Date.now().toString(36)}`;
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
 

@@ -1,6 +1,6 @@
 
 // Same-origin client API path; combined with API_VERSION this maps to /api/v1/*.
-const API_BASE_PATH = (
+const CLIENT_API_PATH = (
   process.env.NEXT_PUBLIC_API_PATH || "/api"
 ).replace(/\/$/, "");
 
@@ -9,7 +9,7 @@ const API_VERSION = "v1";
 // ─── Core request with ApiResponse<T> unwrapping ───
 
 async function apiRequest(path, options = {}) {
-  const url = `${API_BASE_PATH}/${API_VERSION}${path}`;
+  const url = `${CLIENT_API_PATH}/${API_VERSION}${path}`;
 
   const response = await fetch(url, {
     headers: {
