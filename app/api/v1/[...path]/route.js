@@ -5,7 +5,7 @@ const UPSTREAM_API_BASE_URL = (
 async function proxyRequest(request, { params }) {
   const { path = [] } = await params;
   const incomingUrl = new URL(request.url);
-  const upstreamUrl = new URL(`/api/v1/${path.join("/")}`, `${UPSTREAM_API_BASE_URL}/`);
+  const upstreamUrl = new URL(`/api/v1/${path.join("/")}`, UPSTREAM_API_BASE_URL);
 
   upstreamUrl.search = incomingUrl.search;
 
@@ -39,7 +39,7 @@ async function proxyRequest(request, { params }) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error("Failed to proxy Golf Day API request:", error);
+    console.error("Failed to proxy Golf Day API request:", upstreamUrl.toString(), error);
 
     return Response.json(
       {
