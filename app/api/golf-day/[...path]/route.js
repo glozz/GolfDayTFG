@@ -1,5 +1,5 @@
 const UPSTREAM_API_BASE_URL = (
-  process.env.GOLF_DAY_API_BASE_URL || "http://forekonline-001-site6.rtempurl.com/api/v1"
+  process.env.GOLF_DAY_API_BASE_URL || "https://forekonline-001-site6.rtempurl.com/api/v1"
 ).replace(/\/$/, "");
 
 const HOP_BY_HOP_HEADERS = new Set([
@@ -57,7 +57,10 @@ async function proxyRequest(request, { params }) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error("Golf Day API proxy request failed:", error);
+    console.error(
+      "Golf Day API proxy request failed:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     return Response.json(
       {
         message: "Unable to reach the Golf Day API.",
