@@ -27,7 +27,7 @@ async function proxyRequest(request, { params }) {
     cache: "no-store",
   };
 
-  if (!["GET", "HEAD"].includes(request.method)) {
+  if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     const body = await request.arrayBuffer();
 
     if (body.byteLength > 0) {
