@@ -1,5 +1,5 @@
 
-const API_BASE_URL = "/api/golf-day";
+const API_BASE_URL = "/api/v1";
 
 // ─── Core request with ApiResponse<T> unwrapping ───
 
