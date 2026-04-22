@@ -48,12 +48,15 @@ async function proxyRequest(request, { params }) {
     });
   } catch (error) {
     const requestId = crypto.randomUUID();
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
 
     console.error("Failed to proxy Golf Day API request:", {
       requestId,
       method: request.method,
       path,
-      error,
+      errorMessage,
+      errorStack,
     });
 
     return Response.json(
@@ -65,6 +68,7 @@ async function proxyRequest(request, { params }) {
   }
 }
 
+// Proxied responses should always resolve at request time and bypass static caching.
 export const dynamic = "force-dynamic";
 
 export async function GET(request, context) {

@@ -1,4 +1,5 @@
 
+// Same-origin client API path; combined with API_VERSION this maps to /api/v1/*.
 const API_BASE_PATH = (
   process.env.NEXT_PUBLIC_API_PATH || "/api"
 ).replace(/\/$/, "");
