@@ -1,9 +1,17 @@
-const UPSTREAM_API_BASE_URL = (
-  process.env.GOLFDAY_API_BASE_URL || "http://forekonline-001-site6.rtempurl.com"
-).replace(/\/$/, "");
+const UPSTREAM_API_BASE_URL = process.env.GOLFDAY_API_BASE_URL?.replace(/\/$/, "");
 
 async function proxyRequest(request, { params }) {
   const { path = [] } = await params;
+
+  if (!UPSTREAM_API_BASE_URL) {
+    return Response.json(
+      {
+        message: "Golf Day API is not configured.",
+      },
+      { status: 500 }
+    );
+  }
+
   const incomingUrl = new URL(request.url);
   const upstreamUrl = new URL(`/api/v1/${path.join("/")}`, UPSTREAM_API_BASE_URL);
 
@@ -39,11 +47,18 @@ async function proxyRequest(request, { params }) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error("Failed to proxy Golf Day API request:", upstreamUrl.toString(), error);
+    const requestId = crypto.randomUUID();
+
+    console.error("Failed to proxy Golf Day API request:", {
+      requestId,
+      method: request.method,
+      path,
+      error,
+    });
 
     return Response.json(
       {
-        message: "Failed to reach the Golf Day API.",
+        message: `Failed to reach the Golf Day API. Request ID: ${requestId}`,
       },
       { status: 502 }
     );
