@@ -1,6 +1,6 @@
 // Default to HTTPS for secure deployments. Override GOLF_DAY_API_BASE_URL if the upstream only exposes HTTP.
 const UPSTREAM_API_BASE_URL = (
-  process.env.GOLF_DAY_API_BASE_URL || "https://forekonline-001-site6.rtempurl.com/api/v1"
+  process.env.GOLF_DAY_API_BASE_URL || "https://golfdayapi.vercel.app/api/v1"
 ).replace(/\/$/, "");
 
 const HOP_BY_HOP_HEADERS = new Set([
